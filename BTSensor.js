@@ -105,7 +105,7 @@ class BTSensor extends EventEmitter {
 
         Object.assign(this,config)
         Object.assign(this,gattConfig)
-    
+
         this._state = "UNKNOWN"
     }
     /**
@@ -328,7 +328,7 @@ class BTSensor extends EventEmitter {
                         type: "integer", 
                         minimum: 0,
                         maximum: 600,
-                        default: 2*(this?.discoveryTimeout??30) },
+                        default: 2*(this?.discoveryTimeout??30) }
                     }
                 },
                 paths:{
@@ -351,7 +351,13 @@ class BTSensor extends EventEmitter {
                     pollFreq: { type: "number", title: "Polling frequency in seconds"}
                 }
 			}
-		}
+		} else{
+            this._schema.properties.params.properties.minUpdateInterval=                        
+                {title: "Minimum update interval in milliseconds (0 to disable rate limiting).", 
+                type: "integer", 
+                minimum: 0,
+                default: 0 }
+        }
 
 
         //create the 'name' parameter
@@ -728,13 +734,20 @@ class BTSensor extends EventEmitter {
      * DBUS connection stays alive, doesn't tax resources and doesn't spit out spurious errors.
      */
     initPropertiesChanged(){
-
+        let lastPropsChanged = -1
         this._propertiesChanged.bind(this)
         this.device.helper._prepare()
         this.device.helper.on("PropertiesChanged",
             ((props)=> {
+                if ( this.minUpdateInterval && 
+                     lastPropsChanged>0 && 
+                     (Date.now() - lastPropsChanged) < this.minUpdateInterval) {
+                        this.debug(`Ignoring properties changed. Last update was ${Date.now() - lastPropsChanged} ms ago.`)
+                    return
+                }
                 try{
                     this._propertiesChanged(props)
+                    lastPropsChanged = Date.now()
                 }
                 catch(error){
                     this.debug(`Error occured on ${this.getNameAndAddress()}: ${error?.message??error}`)
@@ -951,8 +964,8 @@ class BTSensor extends EventEmitter {
             this.currentProperties.ManufacturerData=this.valueIfVariant(props.ManufacturerData)
         if (this.isActive())
             this.propertiesChanged(props)
-
     }
+    
     propertiesChanged(props){
         //implemented by subclass
     }
@@ -973,7 +986,7 @@ class BTSensor extends EventEmitter {
         this._currentValues[tag]=value
     }
 
-    emit(tag, value){
+    _emit(tag, value){
         super.emit(tag, value)
         if (this.usingGATT()) //update last contact time only for GATT devices 
                               //which do not receive propertyChanged events when connected
