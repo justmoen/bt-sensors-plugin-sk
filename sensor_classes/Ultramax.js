@@ -15,9 +15,9 @@ class Ultramax extends BTSensor {
   static Domain = BTSensor.SensorDomains.electrical
   static ImageFile = "TopbandBattery.webp"
 
-  static TX_RX_SERVICE = "0000ff00-0000-1000-8000-00805f9b34fb";
-  static NOTIFY_CHAR_UUID = "0000ff01-0000-1000-8000-00805f9b34fb";
-  static WRITE_CHAR_UUID = "0000ff02-0000-1000-8000-00805f9b34fb";
+  static TX_RX_SERVICE = "0000fff0-0000-1000-8000-00805f9b34fb";
+  static NOTIFY_CHAR_UUID = "0000fff1-0000-1000-8000-00805f9b34fb";
+  static WRITE_CHAR_UUID = "0000fff2-0000-1000-8000-00805f9b34fb";
     
   static identify(device){
     return null
@@ -135,7 +135,7 @@ class Ultramax extends BTSensor {
     try {
       await super.initGATTConnection(isReconnecting);
       const gattServer = await this.getGATTServer();
-
+      
       this.txRxService = await gattServer.getPrimaryService(
         this.constructor.TX_RX_SERVICE
       );
