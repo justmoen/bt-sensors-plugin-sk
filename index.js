@@ -158,7 +158,7 @@ module.exports =   function (app) {
 
 		}
 	}
-	plugin.id = 'bt-sensors-plugin-sk dev';
+	plugin.id = 'bt-sensors-plugin-sk-dev';
 	plugin.name = 'BT Sensors plugin dev';
 	plugin.description = 'Plugin to communicate with and update paths to BLE Sensors in Signalk';
 	plugin.log = []
