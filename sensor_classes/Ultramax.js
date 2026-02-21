@@ -1,7 +1,5 @@
 const BTSensor = require("../BTSensor");
 
-const requestDataCommand = [0xE9, 0xFC, 0x3C, 0x4D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x01];
-
 class Ultramax extends BTSensor {
   static Domain = BTSensor.SensorDomains.electrical
   static ImageFile = "TopbandBattery.webp"
@@ -20,23 +18,60 @@ class Ultramax extends BTSensor {
     );
   }
 
+  buildPollCommand() {
+    const payload = Buffer.from([0x01, 0x54, 0x00, 0x00]);
+
+    let sum = 0;
+    for (const b of payload)
+      sum += b;
+
+    sum &= 0xFF;
+
+    return Buffer.from(
+      ':' +
+      payload.toString('hex').toUpperCase() +
+      sum.toString(16).padStart(2, '0').toUpperCase() +
+      '~',
+      'ascii'
+    );
+  }
+
+  checkSum(buffer) {
+    if (buffer.length < 2) {
+      console.log(
+        `Cannot checksum ${buffer}. Invalid buffer. Buffer must be at least 2 bytes long.`
+      );
+      return false;
+    }
+      
+    const data = buffer.slice(0, buffer.length - 1);
+    const received = buffer[buffer.length - 1];
+
+    let sum = 0;
+    for (const b of data)
+      sum += b;
+
+    sum &= 0xFF;
+
+    return sum === received;
+  }
+
   initSchema(){
     this.debug(`${this.getName()}::initSchema`);
 
     super.initSchema()
     this.addDefaultParam("batteryID")
 
-    this.addDefaultPath("voltage", "electrical.batteries.voltage").read = (
+    this.addDefaultPath("voltage", "electrical.batteries.{batteryID}.voltage").read = (
       buffer
     ) => {
-      return buffer.readUInt16LE(19) / 100.0;
+      return buffer.readUInt16BE(5) / 1000;
     };
 
-    this.addDefaultPath("current", "electrical.batteries.current").read = (
+    this.addDefaultPath("current", "electrical.batteries.{batteryID}.current").read = (
       buffer
     ) => {
-      const rawCurrent = buffer.readUInt16LE(21);
-      return (rawCurrent - 0x7FFF) / 100.0;
+      return buffer.readInt32B(7) / 100;
     };
   }
 
@@ -69,13 +104,13 @@ class Ultramax extends BTSensor {
         ) {
           result = Uint8Array.prototype.slice.call(
             result,
-            2, //changed from 0 to 2
+            0,
             offset + buffer.length
           );
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
-          // if (!checkSum(result))
-          //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
+          if (!this.checkSum(result))
+            reject(`Invalid checksum from ${this.getName()}, not processing.`);
 
           resolve(result);
         }
@@ -144,7 +179,7 @@ class Ultramax extends BTSensor {
     try {
       // FIXME not really needed?
       this.debug(`${this.getName()}::initGATTConnection sending a test poll`);
-      await this.getBuffer(requestDataCommand);
+      await this.getBuffer(this.buildPollCommand());
     } catch (e) {
       console.error(e);
       this.debug(`Error encountered calling getBuffer(requestDataCommand)`);
@@ -152,7 +187,7 @@ class Ultramax extends BTSensor {
   }
 
   async getAndEmitBatteryData() {
-    return this.getBuffer(requestDataCommand).then((buffer) => {
+    return this.getBuffer(this.buildPollCommand()).then((buffer) => {
       [
         "current",
         "voltage",
