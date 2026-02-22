@@ -223,7 +223,8 @@ class Ultramax extends BTSensor {
       [
         "current",
         "voltage",
-        "cycles"
+        "cycles",
+        "cell0Voltage"
       ].forEach((tag) => this.emitData(tag, result));
     });
   }
