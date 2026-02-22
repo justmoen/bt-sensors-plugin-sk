@@ -94,7 +94,7 @@ class Ultramax extends BTSensor {
       }, 30000);
 
       const valChanged = async (buffer) => {
-        buffer.copy(result, offset);
+        result += buffer;
         const start = result.indexOf(':');
         const end = result.indexOf('~');
         this.debug(`Buffer value: ${buffer}`);
