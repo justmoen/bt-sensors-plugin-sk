@@ -137,6 +137,7 @@ class Ultramax extends BTSensor {
           const raw = Buffer.from(result, 'ascii');
           // if (!this.verifyChecksum(raw))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
+          this.debug(`voltage buffer: ${raw[7]} and ${raw[8]}`);
           resolve(raw);
         }
         offset += buffer.length;
@@ -146,23 +147,23 @@ class Ultramax extends BTSensor {
   }
 
   hasGATT() {
-    this.debug(`${this.getName()}::hasGATT`);
+    // this.debug(`${this.getName()}::hasGATT`);
     return true;
   }
 
   usingGATT() {
-    this.debug(`${this.getName()}::usingGATT`);
+    // this.debug(`${this.getName()}::usingGATT`);
     return true;
   }
 
   async emitGATT() {
-    this.debug(`${this.getName()}::emitGATT`);
+    // this.debug(`${this.getName()}::emitGATT`);
     try {
-      this.debug(`${this.getName()}::emitGATT calling getAndEmitBatteryData`);
+      // this.debug(`${this.getName()}::emitGATT calling getAndEmitBatteryData`);
       await this.getAndEmitBatteryData();
-      this.debug(
-        `${this.getName()}::emitGATT returned from getAndEmitBatteryData`
-      );
+      // this.debug(
+      //   `${this.getName()}::emitGATT returned from getAndEmitBatteryData`
+      // );
     } catch (e) {
       console.error(e);
       this.debug(
@@ -172,7 +173,7 @@ class Ultramax extends BTSensor {
   }
 
   async initGATTConnection(isReconnecting = false) {
-    this.debug(`${this.getName()}::initGATTConnection`);
+    // this.debug(`${this.getName()}::initGATTConnection`);
 
     if (this.rxChar)
       try {
