@@ -134,7 +134,7 @@ class Ultramax extends BTSensor {
           );
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
-          const raw = Buffer.from(result, 'ascii');
+          const raw = Buffer.from(result, 'hex');
           // if (!this.verifyChecksum(raw))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
           this.debug(`voltage buffer: ${raw[7]} and ${raw[8]}`);
