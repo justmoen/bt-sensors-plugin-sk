@@ -7,11 +7,6 @@ class Ultramax extends BTSensor {
   static TX_RX_SERVICE = "0000fff0-0000-1000-8000-00805f9b34fb";
   static NOTIFY_CHAR_UUID = "0000fff1-0000-1000-8000-00805f9b34fb";
   static WRITE_CHAR_UUID = "0000fff6-0000-1000-8000-00805f9b34fb";
-    
-  constructor() {
-    super();
-    this.rxBuffer = '';
-  }
 
   static identify(device){
     return null
@@ -84,60 +79,38 @@ class Ultramax extends BTSensor {
       (buffer)=>{return buffer.readInt32BE(7) / 100}
   }
 
-  handleNotification(data) {
-    this.rxBuffer += data.toString('ascii');
-    const result = null;
-
-    while (true) {
-      const start = this.rxBuffer.indexOf(':');
-      const end = this.rxBuffer.indexOf('~');
-
-      if (start === -1 || end === -1 || end <= start)
-        break;
-
-      const frame = this.rxBuffer.substring(start + 1, end);
-      this.rxBuffer = this.rxBuffer.substring(end + 1);
-
-      result = this.processFrame(frame);
-      if (result) {
-        return result;
-      }
-    }
-  }
-
-  processFrame(frameHex) {
-    const raw = Buffer.from(frameHex, 'hex');
-
-    if (!this.verifyChecksum(raw)) {
-      return;
-    }
-
-    if (raw.readUInt8(1) !== 0x54) {
-      return;
-    }
-    return raw;
-  }
-
   getBuffer(command) {
     return new Promise(async (resolve, reject) => {
       const r = await this.sendReadFunctionRequest(command);
       let result = Buffer.alloc(256);
-
+      let offset = 0;
+      const start = buffer.indexOf(':');
+      const end = buffer.indexOf('~');
       const timer = setTimeout(() => {
         clearTimeout(timer);
         reject(
           new Error(
-            `Response timed out (+30s) from Ultramax device ${this.getName()}. `
+            `Response timed out (+30s) from JBDBMS device ${this.getName()}. `
           )
         );
       }, 30000);
 
       const valChanged = async (buffer) => {
-        this.debug(`Value changed from ${this.getName()}, value = ${buffer.toString('ascii')}.`);
-        result = this.handleNotification(Buffer.from(buffer));
-        this.rxChar.removeAllListeners();
-        clearTimeout(timer);
-        resolve(result);
+        buffer.copy(result.toString('ascii'), offset);
+        if (
+          raw.readUInt8(1) == 0x54 &&
+          start !== -1 && end !== -1 && end >= start
+        ) {
+          result = buffer.substring(start + 1, end);
+          buffer = buffer.substring(end + 1);
+          this.rxChar.removeAllListeners();
+          clearTimeout(timer);
+          if (!this.verifyChecksum(result))
+            reject(`Invalid checksum from ${this.getName()}, not processing.`);
+
+          resolve(Buffer.from(result, 'hex'));
+        }
+        offset += buffer.length;
       };
       this.rxChar.on("valuechanged", valChanged);
     });
