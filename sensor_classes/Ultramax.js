@@ -97,14 +97,16 @@ class Ultramax extends BTSensor {
         buffer.copy(result, offset);
         const start = buffer.indexOf(':');
         const end = buffer.indexOf('~');
+        this.debug(`Buffer value: ${buffer}`);
+        this.debug(`Result value: ${result}`);
         this.debug(`Start value: ${start}`);
         this.debug(`End value: ${end}`);
-        this.debug(`Test value: ${buffer.readUInt8(1)}`);
+        // this.debug(`Test value: ${buffer.readUInt8(1)}`);
         if (
           start !== -1 &&
           end !== -1 &&
-          end >= start &&
-          buffer.substring(start + 1).readUInt8(1) == 0x54
+          end >= start
+          // buffer.substring(start + 1).readUInt8(1) == 0x54
         ) {
           result = buffer.substring(start + 1, end);
           buffer = buffer.substring(end + 1);
@@ -112,7 +114,7 @@ class Ultramax extends BTSensor {
           clearTimeout(timer);
           if (!this.verifyChecksum(result))
             reject(`Invalid checksum from ${this.getName()}, not processing.`);
-
+          this.debug(`DID IT!`);
           resolve(Buffer.from(result, 'hex'));
         }
         offset += buffer.length;
