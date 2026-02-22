@@ -94,11 +94,11 @@ class Ultramax extends BTSensor {
           )
         );
       }, 30000);
-
+      this.debug(`${this.getName()}::buffer ${buffer.toString('hex')}`);
       const valChanged = async (buffer) => {
         if (offset == 0) {
           //first packet
-          if (buffer[0] !== 0xdd || buffer.length < 5 || buffer[1] !== command)
+          if (buffer[0] !== 0xdd || buffer.length < 2 || buffer[1] !== command)
             reject(`Invalid buffer from ${this.getName()}, not processing.`);
           else datasize = buffer[3];
         }
@@ -187,7 +187,7 @@ class Ultramax extends BTSensor {
       await this.getBuffer(this.buildPollCommand());
     } catch (e) {
       console.error(e);
-      this.debug(`Error encountered calling getBuffer(requestDataCommand)`);
+      this.debug(`Error encountered calling getBuffer(this.buildPollCommad)`);
     }
   }
 
@@ -221,6 +221,10 @@ class Ultramax extends BTSensor {
       console.error(e);
       this.setError(e.message);
     }
+  }
+
+  async initGATTNotifications() {
+    this.debug(`${this.getName()}::initGATTNotifications`);
   }
 
   async deactivateGATT(){
