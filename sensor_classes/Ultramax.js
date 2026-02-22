@@ -84,8 +84,8 @@ class Ultramax extends BTSensor {
       const r = await this.sendReadFunctionRequest(command);
       let result = Buffer.alloc(256);
       let offset = 0;
-      const start = buffer.indexOf(':');
-      const end = buffer.indexOf('~');
+      const start = result.indexOf(':');
+      const end = result.indexOf('~');
       const timer = setTimeout(() => {
         clearTimeout(timer);
         reject(
