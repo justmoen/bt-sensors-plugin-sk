@@ -105,6 +105,15 @@ class Ultramax extends BTSensor {
           end >= start
           // buffer.substring(start + 1).readUInt8(1) == 0x54
         ) {
+          result = Uint8Array.prototype.slice.call(
+            result,
+            start + 1,
+            end
+          );
+          buffer = Uint8Array.prototype.slice.call(
+            buffer,
+            end + 1
+          );
           result = buffer.substring(start + 1, end);
           buffer = buffer.substring(end + 1);
           this.rxChar.removeAllListeners();
