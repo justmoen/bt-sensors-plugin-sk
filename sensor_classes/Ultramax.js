@@ -14,7 +14,7 @@ class Ultramax extends BTSensor {
 
   async sendReadFunctionRequest(command) {
     this.debug(`${this.getName()}::sendReadFunctionRequest poll command ${command}`)
-    return await this.txChar.writeValue(command);
+    return await this.txChar.writeValueWithoutResponse(command);
   }
 
   buildPollCommand() {
@@ -127,6 +127,7 @@ class Ultramax extends BTSensor {
       }, 30000);
 
       const valChanged = async (buffer) => {
+        this.debug(`Value changed from ${this.getName()}, value = ${buffer.toString('ascii')}.`);
         result = this.handleNotification(Buffer.from(buffer));
         this.rxChar.removeAllListeners();
         clearTimeout(timer);
