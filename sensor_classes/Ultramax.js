@@ -77,9 +77,12 @@ class Ultramax extends BTSensor {
       .read=
       (buffer)=>{return buffer.readInt32BE(7) / 100}
 
-    this.addDefaultPath('tenmperature','electrical.batteries.temperature')
-      .read=
-      (buffer)=>{return buffer.readUInt16BE(11) / 10}
+    this.addDefaultPath(
+      "SOC",
+      "electrical.batteries.capacity.stateOfCharge"
+    ).read = (buffer) => {
+      return buffer.readUInt8(4);
+    };
 
     this.addDefaultPath('cycles','electrical.batteries.cycles')
       .read=
