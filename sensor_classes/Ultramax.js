@@ -7,11 +7,6 @@ class Ultramax extends BTSensor {
   static TX_RX_SERVICE = "0000fff0-0000-1000-8000-00805f9b34fb";
   static NOTIFY_CHAR_UUID = "0000fff1-0000-1000-8000-00805f9b34fb";
   static WRITE_CHAR_UUID = "0000fff6-0000-1000-8000-00805f9b34fb";
-
-  constructor() {
-    super();
-    this.rxBuffer = '';
-  }
     
   static identify(device){
     return null
@@ -131,12 +126,13 @@ class Ultramax extends BTSensor {
         );
       }, 30000);
 
-      this.rxChar.on("valuechanged", buffer => {
+      const valChanged = async (buffer) => {
         result = this.handleNotification(Buffer.from(buffer));
         this.rxChar.removeAllListeners();
         clearTimeout(timer);
         resolve(result);
-      });
+      };
+      this.rxChar.on("valuechanged", valChanged);
     });
   }
 
