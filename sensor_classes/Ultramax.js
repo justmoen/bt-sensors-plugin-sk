@@ -69,19 +69,32 @@ class Ultramax extends BTSensor {
       }
     );
 
+    const indexOffset = 0;
+
     this.addDefaultPath('voltage','electrical.batteries.voltage')
       .read=
-      (buffer)=>{return buffer.readUInt16BE(98) / 1000}
+      (buffer)=>{return buffer.readUInt16BE(5 + indexOffset) / 1000}
 
     this.addDefaultPath('current','electrical.batteries.current')
       .read=
-      (buffer)=>{return buffer.readInt32BE(92) / 100}
+      (buffer)=>{return buffer.readInt32BE(7 + indexOffset) / 100}
 
     this.addDefaultPath("cycles", "electrical.batteries.cycles").read = (
       buffer
     ) => {
-      return buffer.readUInt16BE(104);
+      return buffer.readUInt16BE(11 + indexOffset);
     };
+
+    for (let i = 0; i < this.numberOfCells; i++) {
+      this.addMetadatum(
+        `cell${i}Voltage`,
+        "V",
+        `Cell ${i + 1} voltage`,
+        (buffer) => {
+          return buffer.readUInt16BE(i + indexOffset + 17) / 1000;
+        }
+      ).default = `electrical.batteries.{batteryID}.cell${i}.voltage`;
+    }
   }
 
   getBuffer(command) {
@@ -149,6 +162,7 @@ class Ultramax extends BTSensor {
       this.debug(
         `${this.getName()}::emitGATT returned from getAndEmitBatteryData`
       );
+      await this.getAndEmitCellVoltages();
     } catch (e) {
       console.error(e);
       this.debug(
@@ -204,6 +218,14 @@ class Ultramax extends BTSensor {
         "voltage",
         "cycles"
       ].forEach((tag) => this.emitData(tag, result));
+    });
+  }
+
+  async getAndEmitCellVoltages() {
+    return this.getBuffer(this.buildPollCommand()).then((buffer) => {
+      for (let i = 0; i < this.numberOfCells; i++) {
+        this.emitData(`cell${i}Voltage`, buffer);
+      }
     });
   }
 
