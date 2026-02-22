@@ -71,22 +71,17 @@ class Ultramax extends BTSensor {
 
     this.addDefaultPath('voltage','electrical.batteries.voltage')
       .read=
-      (buffer)=>{return buffer.readUInt16BE(5) / 1000}
+      (buffer)=>{return buffer.readUInt16BE(94) / 1000}
 
     this.addDefaultPath('current','electrical.batteries.current')
       .read=
-      (buffer)=>{return buffer.readInt32BE(7) / 100}
+      (buffer)=>{return buffer.readInt32BE(88) / 100}
 
-    this.addDefaultPath(
-      "SOC",
-      "electrical.batteries.capacity.stateOfCharge"
-    ).read = (buffer) => {
-      return buffer.readUInt8(4);
+    this.addDefaultPath("cycles", "electrical.batteries.cycles").read = (
+      buffer
+    ) => {
+      return buffer.readUInt16BE(100);
     };
-
-    this.addDefaultPath('cycles','electrical.batteries.cycles')
-      .read=
-      (buffer)=>{return buffer.readUInt16BE(13)}
   }
 
   getBuffer(command) {
@@ -207,7 +202,6 @@ class Ultramax extends BTSensor {
       [
         "current",
         "voltage",
-        "SOC",
         "cycles"
       ].forEach((tag) => this.emitData(tag, result));
     });
