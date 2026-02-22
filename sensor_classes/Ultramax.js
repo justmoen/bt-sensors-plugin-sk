@@ -58,13 +58,14 @@ class Ultramax extends BTSensor {
     this.debug(`${this.getName()}::initSchema`);
 
     super.initSchema();
+    this.numberOfCells = 4;
     this.addDefaultParam("batteryID");
     this.addParameter(
       "numberOfCells",
       {
           title:'number of cells in battery',
           type: 'integer',
-          default: 4,
+          default: this.numberOfCells,
           isRequired: true
       }
     );
@@ -162,14 +163,20 @@ class Ultramax extends BTSensor {
       this.debug(
         `${this.getName()}::emitGATT returned from getAndEmitBatteryData`
       );
-      await this.getAndEmitCellVoltages();
     } catch (e) {
       console.error(e);
       this.debug(
         `${this.getName()}::emitGATT Failed to emit battery data for ${this.getName()}: ${e}`
       );
     }
-    // }, 10000);
+    try {
+      await this.getAndEmitCellVoltages();
+    } catch (e) {
+      console.error(e);
+      this.debug(
+        `${this.getName()}::emitGATT Failed to emit Cell Voltages for ${this.getName()}: ${e}`
+      );
+    }
   }
 
   async initGATTConnection(isReconnecting = false) {
