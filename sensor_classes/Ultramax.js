@@ -98,11 +98,16 @@ class Ultramax extends BTSensor {
         this.debug(`Result value: ${result}`);
         const start = result.indexOf(':');
         const end = result.indexOf('~');
+        this.debug(`Start value: ${start}`);
+        this.debug(`End value: ${end}`);
+        this.debug(`Test value: ${result.readUInt8(1)}`);
         if (
-          buffer.readUInt8(1) == 0x54 &&
-          start !== -1 && end !== -1 && end >= start
+          start !== -1 &&
+          end !== -1 &&
+          end >= start &&
+          result.substring(start + 1).readUInt8(1) == 0x54
         ) {
-          result = buffer.substring(start + 1, end);
+          result = result.substring(start + 1, end);
           buffer = buffer.substring(end + 1);
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
