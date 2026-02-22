@@ -97,8 +97,6 @@ class Ultramax extends BTSensor {
         buffer.copy(result, offset);
         const start = result.indexOf(':');
         const end = result.indexOf('~');
-        this.debug(`start value: ${start}`);
-        this.debug(`end value: ${end}`);
         // this.debug(`Test value: ${buffer.readUInt8(1)}`);
         if (
           start !== -1 &&
@@ -122,7 +120,6 @@ class Ultramax extends BTSensor {
           this.debug(`DID IT!`);
           resolve(Buffer.from(result, 'hex'));
         }
-        this.debug(`NO MATCH!`);
         offset += buffer.length;
       };
       this.rxChar.on("valuechanged", valChanged);
@@ -197,6 +194,7 @@ class Ultramax extends BTSensor {
 
   async getAndEmitBatteryData() {
     return this.getBuffer(this.buildPollCommand()).then((result) => {
+      this.debug(`Result : ${result}`);
       [
         "current",
         "voltage",
