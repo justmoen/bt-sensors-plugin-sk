@@ -61,18 +61,27 @@ class Ultramax extends BTSensor {
 
     super.initSchema()
     this.addDefaultParam("batteryID")
+    this.addParameter(
+      "numberOfCells",
+      {
+              title:'number of cells in battery',
+              type: 'integer',
+              default: 4,
+              isRequired: true
+          }
+    )
 
-    this.addDefaultPath("voltage", "electrical.batteries.{batteryID}.voltage").read = (
-      buffer
-    ) => {
-      return buffer.readUInt16BE(5) / 1000;
-    };
+    // this.addDefaultPath("voltage", "electrical.batteries.{batteryID}.voltage").read = (
+    //   buffer
+    // ) => {
+    //   return buffer.readUInt16BE(5) / 1000;
+    // };
 
-    this.addDefaultPath("current", "electrical.batteries.{batteryID}.current").read = (
-      buffer
-    ) => {
-      return buffer.readInt32B(7) / 100;
-    };
+    // this.addDefaultPath("current", "electrical.batteries.{batteryID}.current").read = (
+    //   buffer
+    // ) => {
+    //   return buffer.readInt32B(7) / 100;
+    // };
   }
 
   getBuffer(command) {
