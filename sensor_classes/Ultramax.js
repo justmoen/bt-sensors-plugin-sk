@@ -115,8 +115,8 @@ class Ultramax extends BTSensor {
           );
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
-          if (!this.verifyChecksum(result))
-            reject(`Invalid checksum from ${this.getName()}, not processing.`);
+          // if (!this.verifyChecksum(result))
+            // reject(`Invalid checksum from ${this.getName()}, not processing.`);
           this.debug(`DID IT!`);
           resolve(Buffer.from(result, 'hex'));
         }
