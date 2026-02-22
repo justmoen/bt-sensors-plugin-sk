@@ -94,8 +94,9 @@ class Ultramax extends BTSensor {
           )
         );
       }, 30000);
-      this.debug(`${this.getName()}::buffer ${buffer.toString('hex')}`);
+
       const valChanged = async (buffer) => {
+        this.debug(`${this.getName()}::buffer ${buffer.toString('hex')}`);
         if (offset == 0) {
           //first packet
           if (buffer[0] !== 0xdd || buffer.length < 2 || buffer[1] !== command)
