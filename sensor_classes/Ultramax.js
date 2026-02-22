@@ -4,37 +4,12 @@ class Ultramax extends BTSensor {
   static Domain = BTSensor.SensorDomains.electrical
   static ImageFile = "TopbandBattery.webp"
 
-  static TX_RX_SERVICE = "0000fff0-0000-1000-8000-00805f9b34fb";
-  static NOTIFY_CHAR_UUID = "0000fff1-0000-1000-8000-00805f9b34fb";
-  static WRITE_CHAR_UUID = "0000fff2-0000-1000-8000-00805f9b34fb";
+  static TX_RX_SERVICE = "00002800-0000-1000-8000-00805f9b34fb";
+  static NOTIFY_CHAR_UUID = "0000fff2-0000-1000-8000-00805f9b34fb";
+  static WRITE_CHAR_UUID = "0000fff1-0000-1000-8000-00805f9b34fb";
     
   static identify(device){
     return null
-  }
-
-  async sendReadFunctionRequest(command) {
-    this.debug(`${this.getName()}::sendReadFunctionRequest poll command ${command}`)
-    return await this.txChar.writeValue(
-      Buffer.from(command)
-    );
-  }
-
-  buildPollCommand() {
-    const payload = Buffer.from([0x01, 0x54, 0x00, 0x00]);
-
-    let sum = 0;
-    for (const b of payload)
-      sum += b;
-
-    sum &= 0xFF;
-
-    return Buffer.from(
-      ':' +
-      payload.toString('hex').toUpperCase() +
-      sum.toString(16).padStart(2, '0').toUpperCase() +
-      '~',
-      'ascii'
-    );
   }
 
   checkSum(buffer) {
@@ -81,9 +56,8 @@ class Ultramax extends BTSensor {
       (buffer)=>{return buffer.readInt32B(7) / 100} 
   }
 
-  getBuffer(command) {
+  getBuffer() {
     return new Promise(async (resolve, reject) => {
-      const r = await this.sendReadFunctionRequest(command);
       let result = Buffer.alloc(256);
       let offset = 0;
       let datasize = -1;
@@ -100,7 +74,7 @@ class Ultramax extends BTSensor {
         this.debug(`${this.getName()}::buffer ${buffer.toString('hex')}`);
         if (offset == 0) {
           //first packet
-          if (buffer[0] !== 0xdd || buffer.length < 2 || buffer[1] !== command)
+          if (buffer[0] !== 0xdd || buffer.length < 2)
             reject(`Invalid buffer from ${this.getName()}, not processing.`);
           else datasize = buffer[3];
         }
@@ -178,6 +152,10 @@ class Ultramax extends BTSensor {
       this.txChar = await this.txRxService.getCharacteristic(
         this.constructor.WRITE_CHAR_UUID
       );
+      await this.txChar.writeValue(
+        Buffer.from([0x00, 0x01])
+      );
+      await this.rxChar.startNotifications();
     } catch (e) {
       console.error(e);
       this.setError(e.message);
@@ -185,16 +163,15 @@ class Ultramax extends BTSensor {
 
     try {
       // FIXME not really needed?
-      this.debug(`${this.getName()}::initGATTConnection sending a test poll`);
-      await this.getBuffer(this.buildPollCommand());
+      await this.getBuffer();
     } catch (e) {
       console.error(e);
-      this.debug(`Error encountered calling getBuffer(this.buildPollCommad)`);
+      this.debug(`Error encountered calling getBuffer()`);
     }
   }
 
   async getAndEmitBatteryData() {
-    return this.getBuffer(this.buildPollCommand()).then((buffer) => {
+    return this.getBuffer().then((buffer) => {
       [
         "current",
         "voltage",
