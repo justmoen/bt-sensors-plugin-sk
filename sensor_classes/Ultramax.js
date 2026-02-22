@@ -7,6 +7,11 @@ class Ultramax extends BTSensor {
   static TX_RX_SERVICE = "0000fff0-0000-1000-8000-00805f9b34fb";
   static NOTIFY_CHAR_UUID = "0000fff1-0000-1000-8000-00805f9b34fb";
   static WRITE_CHAR_UUID = "0000fff6-0000-1000-8000-00805f9b34fb";
+
+  constructor() {
+    super();
+    this.rxBuffer = '';
+  }
     
   static identify(device){
     return null
@@ -35,7 +40,7 @@ class Ultramax extends BTSensor {
     );
   }
 
-  checkSum(buffer) {
+  verifyChecksum(buffer) {
     if (buffer.length < 2) {
       console.log(
         `Cannot checksum ${buffer}. Invalid buffer. Buffer must be at least 2 bytes long.`
@@ -72,19 +77,86 @@ class Ultramax extends BTSensor {
 
     this.addDefaultPath('voltage','electrical.batteries.voltage')
       .read=
-      (buffer)=>{return buffer.readUInt16BE(5) / 1000}
+      (result)=>{return result}
 
     this.addDefaultPath('current','electrical.batteries.current')
       .read=
-      (buffer)=>{return buffer.readInt32B(7) / 100} 
+      (result)=>{return result.readInt32B(7) / 100} 
+  }
+
+  handleNotification(data) {
+    this.rxBuffer += data.toString('ascii');
+
+    while (true) {
+      const start = this.rxBuffer.indexOf(':');
+      const end = this.rxBuffer.indexOf('~');
+
+      if (start === -1 || end === -1 || end <= start)
+        break;
+
+      const frame = this.rxBuffer.substring(start + 1, end);
+      this.rxBuffer = this.rxBuffer.substring(end + 1);
+
+      this.processFrame(frame);
+    }
+  }
+
+  processFrame(frameHex) {
+    const raw = Buffer.from(frameHex, 'hex');
+
+    if (!this.verifyChecksum(raw))
+      return;
+
+    if (raw.readUInt8(1) !== 0x54)
+      return;
+
+    const result = {};
+
+    result.stateOfCharge = raw.readUInt8(4);
+    result.voltage = raw.readUInt16BE(5) / 1000;
+    result.current = raw.readInt32BE(7) / 100;
+    result.temperature = raw.readUInt16BE(11) / 10;
+    result.cycles = raw.readUInt16BE(13);
+
+    const protection = raw.readUInt16BE(15);
+
+    result.alarms = {
+      highVoltage: !!(protection & (1 << 0)),
+      lowVoltage: !!(protection & (1 << 1)),
+      overCurrentCharging: !!(protection & (1 << 2)),
+      overCurrentDischarging: !!(protection & (1 << 3)),
+      lowTempCharging: !!(protection & (1 << 4)),
+      lowTempDischarging: !!(protection & (1 << 5)),
+      highTempCharging: !!(protection & (1 << 6)),
+      highTempDischarging: !!(protection & (1 << 7)),
+      shortCircuit: !!(protection & (1 << 8))
+    };
+
+    result.cells = [];
+
+    let offset = 17;
+    while (offset + 1 < raw.length) {
+
+      const mv = raw.readUInt16BE(offset);
+
+      if (mv === 0 || mv > 5000)
+        break;
+
+      result.cells.push(mv / 1000);
+      offset += 2;
+
+      if (result.cells.length >= 16)
+        break;
+    }
+
+    return result;
   }
 
   getBuffer(command) {
     return new Promise(async (resolve, reject) => {
       const r = await this.sendReadFunctionRequest(command);
       let result = Buffer.alloc(256);
-      let offset = 0;
-      let datasize = -1;
+
       const timer = setTimeout(() => {
         clearTimeout(timer);
         reject(
@@ -95,31 +167,10 @@ class Ultramax extends BTSensor {
       }, 30000);
 
       this.rxChar.on("valuechanged", buffer => {
-        this.debug(`${this.getName()}::buffer ${buffer.toString('hex')}`);
-        if (offset == 0) {
-          //first packet
-          if (buffer[0] !== 0xdd || buffer.length < 2 || buffer[1] !== command)
-            reject(`Invalid buffer from ${this.getName()}, not processing.`);
-          else datasize = buffer[3];
-        }
-        buffer.copy(result, offset);
-        if (
-          buffer[buffer.length - 1] == 0x41 &&
-          offset + buffer.length - 7 == datasize
-        ) {
-          result = Uint8Array.prototype.slice.call(
-            result,
-            0,
-            offset + buffer.length
-          );
-          this.rxChar.removeAllListeners();
-          clearTimeout(timer);
-          if (!this.checkSum(result))
-            reject(`Invalid checksum from ${this.getName()}, not processing.`);
-
-          resolve(result);
-        }
-        offset += buffer.length;
+        result = this.handleNotification(Buffer.from(buffer));
+        this.rxChar.removeAllListeners();
+        clearTimeout(timer);
+        resolve(result);
       });
     });
   }
@@ -191,11 +242,11 @@ class Ultramax extends BTSensor {
   }
 
   async getAndEmitBatteryData() {
-    return this.getBuffer(this.buildPollCommand()).then((buffer) => {
+    return this.getBuffer(this.buildPollCommand()).then((result) => {
       [
         "current",
         "voltage",
-      ].forEach((tag) => this.emitData(tag, buffer));
+      ].forEach((tag) => this.emitData(tag, result));
     });
   }
 
