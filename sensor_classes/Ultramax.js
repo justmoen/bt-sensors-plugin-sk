@@ -134,10 +134,12 @@ class Ultramax extends BTSensor {
           );
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
-          const hexString = result.toString('ascii');
+          const asciiHexBuffer = Buffer.from(result, 'ascii');
+          const hexString = asciiHexBuffer.toString('ascii');
           const rawHexBuffer = Buffer.from(hexString, 'hex');
           // if (!this.verifyChecksum(rawHexBuffer))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
+          this.debug(`test data : ${rawHexBuffer[5]}`);
           this.debug(`test data : ${rawHexBuffer[6]}`);
           resolve(rawHexBuffer);
         }
