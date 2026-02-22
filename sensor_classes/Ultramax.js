@@ -114,8 +114,6 @@ class Ultramax extends BTSensor {
             buffer,
             end + 1
           );
-          result = buffer.substring(start + 1, end);
-          buffer = buffer.substring(end + 1);
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
           if (!this.verifyChecksum(result))
