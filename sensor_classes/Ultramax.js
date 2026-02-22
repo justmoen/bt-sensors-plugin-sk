@@ -8,6 +8,11 @@ class Ultramax extends BTSensor {
   static NOTIFY_CHAR_UUID = "0000fff1-0000-1000-8000-00805f9b34fb";
   static WRITE_CHAR_UUID = "0000fff6-0000-1000-8000-00805f9b34fb";
     
+  constructor() {
+    super();
+    this.rxBuffer = '';
+  }
+
   static identify(device){
     return null
   }
@@ -81,6 +86,7 @@ class Ultramax extends BTSensor {
 
   handleNotification(data) {
     this.rxBuffer += data.toString('ascii');
+    const result = null;
 
     while (true) {
       const start = this.rxBuffer.indexOf(':');
@@ -92,7 +98,10 @@ class Ultramax extends BTSensor {
       const frame = this.rxBuffer.substring(start + 1, end);
       this.rxBuffer = this.rxBuffer.substring(end + 1);
 
-      this.processFrame(frame);
+      result = this.processFrame(frame);
+      if (result) {
+        return result;
+      }
     }
   }
 
@@ -100,15 +109,12 @@ class Ultramax extends BTSensor {
     const raw = Buffer.from(frameHex, 'hex');
 
     if (!this.verifyChecksum(raw)) {
-      this.debug(`Invalid checksum from ${this.getName()}, not processing.`);
       return;
     }
 
     if (raw.readUInt8(1) !== 0x54) {
-      this.debug(`Communication error from ${this.getName()}, not processing.`);
       return;
     }
-
     return raw;
   }
 
