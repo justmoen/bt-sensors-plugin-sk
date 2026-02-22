@@ -70,7 +70,7 @@ class Ultramax extends BTSensor {
       }
     );
 
-    const indexOffset = 1;
+    const indexOffset = 0;
 
     this.addDefaultPath('voltage','electrical.batteries.voltage')
       .read=
@@ -134,9 +134,12 @@ class Ultramax extends BTSensor {
           );
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
-          // if (!this.verifyChecksum(raw))
+          const hexString = result.toString('ascii');
+          const rawHexBuffer = Buffer.from(hexString, 'hex');
+          // if (!this.verifyChecksum(rawHexBuffer))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
-          resolve(result);
+          this.debug(`test data : ${rawHexBuffer[6]}`);
+          resolve(rawHexBuffer);
         }
         offset += buffer.length;
       };
