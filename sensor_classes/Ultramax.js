@@ -81,7 +81,7 @@ class Ultramax extends BTSensor {
 
     this.addDefaultPath('current','electrical.batteries.current')
       .read=
-      (result)=>{return result.readInt32B(7) / 100} 
+      (result)=>{return result} 
   }
 
   handleNotification(data) {
