@@ -77,11 +77,11 @@ class Ultramax extends BTSensor {
 
     this.addDefaultPath('voltage','electrical.batteries.voltage')
       .read=
-      (result)=>{return result}
+      (buffer)=>{return buffer.readUInt16BE(5) / 1000}
 
     this.addDefaultPath('current','electrical.batteries.current')
       .read=
-      (result)=>{return result} 
+      (buffer)=>{return buffer.readInt32BE(7) / 100}
   }
 
   handleNotification(data) {
@@ -104,52 +104,17 @@ class Ultramax extends BTSensor {
   processFrame(frameHex) {
     const raw = Buffer.from(frameHex, 'hex');
 
-    if (!this.verifyChecksum(raw))
+    if (!this.verifyChecksum(raw)) {
+      this.debug(`Invalid checksum from ${this.getName()}, not processing.`);
       return;
-
-    if (raw.readUInt8(1) !== 0x54)
-      return;
-
-    const result = {};
-
-    result.stateOfCharge = raw.readUInt8(4);
-    result.voltage = raw.readUInt16BE(5) / 1000;
-    result.current = raw.readInt32BE(7) / 100;
-    result.temperature = raw.readUInt16BE(11) / 10;
-    result.cycles = raw.readUInt16BE(13);
-
-    const protection = raw.readUInt16BE(15);
-
-    result.alarms = {
-      highVoltage: !!(protection & (1 << 0)),
-      lowVoltage: !!(protection & (1 << 1)),
-      overCurrentCharging: !!(protection & (1 << 2)),
-      overCurrentDischarging: !!(protection & (1 << 3)),
-      lowTempCharging: !!(protection & (1 << 4)),
-      lowTempDischarging: !!(protection & (1 << 5)),
-      highTempCharging: !!(protection & (1 << 6)),
-      highTempDischarging: !!(protection & (1 << 7)),
-      shortCircuit: !!(protection & (1 << 8))
-    };
-
-    result.cells = [];
-
-    let offset = 17;
-    while (offset + 1 < raw.length) {
-
-      const mv = raw.readUInt16BE(offset);
-
-      if (mv === 0 || mv > 5000)
-        break;
-
-      result.cells.push(mv / 1000);
-      offset += 2;
-
-      if (result.cells.length >= 16)
-        break;
     }
 
-    return result;
+    if (raw.readUInt8(1) !== 0x54) {
+      this.debug(`Communication error from ${this.getName()}, not processing.`);
+      return;
+    }
+
+    return raw;
   }
 
   getBuffer(command) {
