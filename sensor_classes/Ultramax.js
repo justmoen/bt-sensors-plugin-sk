@@ -13,7 +13,8 @@ class Ultramax extends BTSensor {
   }
 
   async sendReadFunctionRequest(command) {
-    return await this.txChar.writeValueWithoutResponse(
+    this.debug(`${this.getName()}::sendReadFunctionRequest poll command ${command}`)
+    return await this.txChar.writeValue(
       Buffer.from(command)
     );
   }
