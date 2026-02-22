@@ -96,8 +96,8 @@ class Ultramax extends BTSensor {
       const valChanged = async (buffer) => {
         this.debug(`Buffer value: ${buffer}`)
         buffer.copy(result, offset);
-        const start = result.indexOf(':');
-        const end = result.indexOf('~');
+        const start = buffer.indexOf(':');
+        const end = buffer.indexOf('~');
         if (
           buffer.readUInt8(1) == 0x54 &&
           start !== -1 && end !== -1 && end >= start
