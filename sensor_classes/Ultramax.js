@@ -13,7 +13,6 @@ class Ultramax extends BTSensor {
   }
 
   async sendReadFunctionRequest(command) {
-    this.debug(`${this.getName()}::sendReadFunctionRequest poll command ${command}`)
     return await this.txChar.writeValueWithoutResponse(command);
   }
 
@@ -84,18 +83,20 @@ class Ultramax extends BTSensor {
       const r = await this.sendReadFunctionRequest(command);
       let result = Buffer.alloc(256);
       let offset = 0;
-      const start = result.indexOf(':');
-      const end = result.indexOf('~');
+      
       const timer = setTimeout(() => {
         clearTimeout(timer);
         reject(
           new Error(
-            `Response timed out (+30s) from JBDBMS device ${this.getName()}. `
+            `Response timed out (+30s) from Ultramax device ${this.getName()}. `
           )
         );
       }, 30000);
 
       const valChanged = async (buffer) => {
+        this.debug(`Buffer value: ${buffer}`)
+        const start = result.indexOf(0x3A);
+        const end = result.indexOf(0X7E);
         buffer.copy(result, offset);
         if (
           buffer.readUInt8(1) == 0x54 &&
