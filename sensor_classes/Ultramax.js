@@ -155,8 +155,7 @@ class Ultramax extends BTSensor {
           clearTimeout(timer);
           // if (!this.verifyChecksum(result))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
-          const buf = Buffer.from(result.replace(/\s+/g, ''), 'hex');
-          resolve(buf.toString('ascii').substring(25));
+          resolve(result);
         }
         offset += buffer.length;
       };
@@ -231,14 +230,16 @@ class Ultramax extends BTSensor {
 
   async getAndEmitBatteryData() {
     return this.getBuffer(this.buildPollCommand()).then((result) => {
+      const buffer = Buffer.from(result.replace(/\s+/g, ''), 'hex');
+      const asciiResult = buffer.toString('ascii').substring(25);
       [
         "current",
         "voltage",
         "cycles",
         "temp",
-      ].forEach((tag) => this.emitData(tag, result));
+      ].forEach((tag) => this.emitData(tag, asciiResult));
       for (let i = 0; i < this.numberOfCells; i++) {
-        this.emitData(`cell${i}Voltage`, result);
+        this.emitData(`cell${i}Voltage`, asciiResult);
       }
     });
   }
