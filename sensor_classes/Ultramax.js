@@ -1,5 +1,20 @@
 const BTSensor = require("../BTSensor");
 
+const testData=[
+  ['3a 30 31 35 34 30 31 30 30 45 43 30 30 30 31 30 32 30 33 30',
+  '34 30 35 30 36 30 44 35 42 30 44 37 38 30 44 37 39 30 44 37',
+  '39 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30',
+  '30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30',
+  '30 30 30 30 30 30 30 30 30 46 30 30 30 30 30 30 30 34 36 34',
+  '36 34 36 34 36 31 30 45 45 30 30 30 30 30 30 30 30 37 46 46',
+  '46 46 46 46 46 33 35 43 35 30 30 31 45 30 34 30 30 42 34 36',
+  '33 30 30 30 31 44 34 43 30 30 30 30 34 35 38 46 45 30 30 30',
+  '31 44 34 43 30 30 30 30 32 30 35 46 30 30 30 30 36 30 30 30',
+  '31 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30',
+  '30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30',
+  '30 30 30 30 30 30 30 30 30 30 30 30 30 37 39 00 7e 00 00 00']
+]
+
 class Ultramax extends BTSensor {
   static Domain = BTSensor.SensorDomains.electrical
   static ImageFile = "TopbandBattery.webp"
@@ -70,20 +85,18 @@ class Ultramax extends BTSensor {
       }
     );
 
-    const indexOffset = 0;
-
     this.addDefaultPath('voltage','electrical.batteries.voltage')
       .read=
-      (buffer)=>{return buffer.readUInt16BE(5 + indexOffset) / 1000}
+      (buffer)=>{return buffer.readUInt16BE(50) / 1000}
 
     this.addDefaultPath('current','electrical.batteries.current')
       .read=
-      (buffer)=>{return buffer.readInt32BE(7 + indexOffset) / 100}
+      (buffer)=>{return buffer.readInt32BE(46) / 100}
 
     this.addDefaultPath("cycles", "electrical.batteries.cycles").read = (
       buffer
     ) => {
-      return buffer.readUInt16BE(11 + indexOffset);
+      return buffer.readUInt16BE(55);
     };
 
     for (let i = 0; i < this.numberOfCells; i++) {
@@ -92,10 +105,16 @@ class Ultramax extends BTSensor {
         "V",
         `Cell ${i + 1} voltage`,
         (buffer) => {
-          return buffer.readUInt16BE(i + indexOffset + 17) / 1000;
+          return buffer.readUInt16BE(i * 2) / 1000;
         }
       ).default = `electrical.batteries.{batteryID}.cell${i}.voltage`;
     }
+
+    this.addMetadatum('temp', 'C', 'Temperature reading',
+      (buffer)=>{
+        return buffer.readUInt16BE(52)/10
+      }
+    ).default='electrical.batteries.{batteryID}.temperature'
   }
 
   getBuffer(command) {
@@ -134,12 +153,10 @@ class Ultramax extends BTSensor {
           );
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
-          // if (!this.verifyChecksum(rawHexBuffer))
+          // if (!this.verifyChecksum(result))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
-          this.debug(`test data : ${result[1]}`);
-          this.debug(`test data : ${result[5]}`);
-          this.debug(`test data : ${result[6]}`);
-          resolve(result);
+          const buffer = Buffer.from(result.replace(/\s+/g, ''), 'hex');
+          resolve(buffer.toString('ascii').substring(25));
         }
         offset += buffer.length;
       };
@@ -218,6 +235,7 @@ class Ultramax extends BTSensor {
         "current",
         "voltage",
         "cycles",
+        "temp",
       ].forEach((tag) => this.emitData(tag, result));
       for (let i = 0; i < this.numberOfCells; i++) {
         this.emitData(`cell${i}Voltage`, result);
