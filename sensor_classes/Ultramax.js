@@ -155,8 +155,8 @@ class Ultramax extends BTSensor {
           clearTimeout(timer);
           // if (!this.verifyChecksum(result))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
-          const buffer = Buffer.from(result.replace(/\s+/g, ''), 'hex');
-          resolve(buffer.toString('ascii').substring(25));
+          const buf = Buffer.from(result.replace(/\s+/g, ''), 'hex');
+          resolve(buf.toString('ascii').substring(25));
         }
         offset += buffer.length;
       };
