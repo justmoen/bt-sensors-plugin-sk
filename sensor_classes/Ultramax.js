@@ -87,16 +87,16 @@ class Ultramax extends BTSensor {
 
     this.addDefaultPath('voltage','electrical.batteries.voltage')
       .read=
-      (buffer)=>{return buffer.readUInt16BE(50) / 1000}
+      (buffer)=>{return buffer.readUInt16BE(62) / 1000}
 
     this.addDefaultPath('current','electrical.batteries.current')
       .read=
-      (buffer)=>{return buffer.readInt32BE(46) / 100}
+      (buffer)=>{return buffer.readInt32BE(58) / 100}
 
     this.addDefaultPath("cycles", "electrical.batteries.cycles").read = (
       buffer
     ) => {
-      return buffer.readUInt16BE(55);
+      return buffer.readUInt16BE(67);
     };
 
     for (let i = 0; i < this.numberOfCells; i++) {
@@ -105,14 +105,14 @@ class Ultramax extends BTSensor {
         "V",
         `Cell ${i + 1} voltage`,
         (buffer) => {
-          return buffer.readUInt16BE(i * 2) / 1000;
+          return buffer.readUInt16BE((i * 2) + 12) / 1000;
         }
       ).default = `electrical.batteries.{batteryID}.cell${i}.voltage`;
     }
 
     this.addMetadatum('temp', 'C', 'Temperature reading',
       (buffer)=>{
-        return buffer.readUInt16BE(52)/10
+        return buffer.readUInt16BE(61)/10
       }
     ).default='electrical.batteries.{batteryID}.temperature'
   }
@@ -230,8 +230,7 @@ class Ultramax extends BTSensor {
 
   async getAndEmitBatteryData() {
     return this.getBuffer(this.buildPollCommand()).then((result) => {
-      const buf = Buffer.from(result.toString().substring(25).replace(/\s+/g, ''), 'hex');
-      console.log("string:", buf);
+      const buf = Buffer.from(result.toString().replace(/\s+/g, ''), 'hex');
       [
         "current",
         "voltage",
