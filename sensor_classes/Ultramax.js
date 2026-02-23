@@ -119,7 +119,7 @@ class Ultramax extends BTSensor {
 
   getBuffer(command) {
     return new Promise(async (resolve, reject) => {
-      const r = await this.sendReadFunctionRequest(command);
+      // const r = await this.sendReadFunctionRequest(command);
       let result = Buffer.alloc(256);
       let offset = 0;
       
