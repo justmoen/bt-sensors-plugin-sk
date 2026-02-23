@@ -230,16 +230,17 @@ class Ultramax extends BTSensor {
 
   async getAndEmitBatteryData() {
     return this.getBuffer(this.buildPollCommand()).then((result) => {
-      const buffer = Buffer.from(result.toString().replace(/\s+/g, ''), 'hex');
-      const asciiResult = Buffer.from(buffer.toString('ascii').substring(25), 'hex');
+      console.log("buffer:", result);
+      // const buffer = Buffer.from(result.toString().replace(/\s+/g, ''), 'hex');
+      // const asciiResult = Buffer.from(buffer.toString('ascii').substring(25), 'hex');
       [
         "current",
         "voltage",
         "cycles",
         "temp",
-      ].forEach((tag) => this.emitData(tag, asciiResult));
+      ].forEach((tag) => this.emitData(tag, result));
       for (let i = 0; i < this.numberOfCells; i++) {
-        this.emitData(`cell${i}Voltage`, asciiResult);
+        this.emitData(`cell${i}Voltage`, result);
       }
     });
   }
