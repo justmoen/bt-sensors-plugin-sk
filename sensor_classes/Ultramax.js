@@ -65,7 +65,8 @@ class Ultramax extends BTSensor {
       sum += b;
 
     sum &= 0xFF;
-
+    this.debug(`sum:${sum}`);
+    this.debug(`received:${received}`);
     return sum === received;
   }
 
@@ -91,7 +92,7 @@ class Ultramax extends BTSensor {
 
     this.addDefaultPath('current','electrical.batteries.current')
       .read=
-      (buffer)=>{return buffer.readInt32BE(58) / 100}
+      (buffer)=>{return buffer.readInt32BE(59) / 100}
 
     this.addDefaultPath("cycles", "electrical.batteries.cycles").read = (
       buffer
@@ -112,9 +113,34 @@ class Ultramax extends BTSensor {
 
     this.addMetadatum('temp', 'C', 'Temperature reading',
       (buffer)=>{
-        return buffer.readUInt16BE(61)/10
+        return buffer.readUInt16BE(64)
       }
     ).default='electrical.batteries.{batteryID}.temperature'
+
+    this.addDefaultPath(
+      "SOC",
+      "electrical.batteries.capacity.stateOfCharge"
+    ).read = (buffer) => {
+      return buffer.readUInt8(69);
+    };
+
+    /* This is TODO:  this is difficult to reverse engineer.  Knowledge from factory would be helpful.
+    // There are many 0s in the frame.  The alarm bits could be in any of these sets and there could be more than what is shown in UMXLI.
+    this.addMetadatum("protectionStatus", "", "Protection Status", (buffer) => {
+      const bits = buffer.readUInt16BE(55).toString(2);
+      return {
+        packOvervolt: bits[0] == "1",
+        packUndervolt: bits[1] == "1",
+        chargeOvercurrent: bits[2] == "1",
+        dischargeOvercurrent: bits[3] == "1",
+        chargeUndertemp: bits[4] == "1",
+        dischargeUndertemp: bits[5] == "1",
+        chargeUndertemp: bits[6] == "1",
+        dischargeUndertemp: bits[7] == "1",
+        shortCircut: bits[8] == "1",
+      };
+    }).default = "electrical.batteries.{batteryID}.protectionStatus";
+    */
   }
 
   getBuffer(command) {
@@ -140,8 +166,9 @@ class Ultramax extends BTSensor {
           start !== -1 &&
           end !== -1 &&
           end >= start
-          // buffer.substring(start + 1).readUInt8(1) == 0x54
+          // buffer.substring(start + 1).readUInt8(1) == 54
         ) {
+          this.debug(`first byte:${result[1]}`);
           result = Uint8Array.prototype.slice.call(
             result,
             start + 1,
@@ -153,6 +180,7 @@ class Ultramax extends BTSensor {
           );
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
+          this.verifyChecksum(result);
           // if (!this.verifyChecksum(result))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
           resolve(result);
@@ -164,23 +192,23 @@ class Ultramax extends BTSensor {
   }
 
   hasGATT() {
-    // this.debug(`${this.getName()}::hasGATT`);
+    this.debug(`${this.getName()}::hasGATT`);
     return true;
   }
 
   usingGATT() {
-    // this.debug(`${this.getName()}::usingGATT`);
+    this.debug(`${this.getName()}::usingGATT`);
     return true;
   }
 
   async emitGATT() {
-    // this.debug(`${this.getName()}::emitGATT`);
+    this.debug(`${this.getName()}::emitGATT`);
     try {
-      // this.debug(`${this.getName()}::emitGATT calling getAndEmitBatteryData`);
+      this.debug(`${this.getName()}::emitGATT calling getAndEmitBatteryData`);
       await this.getAndEmitBatteryData();
-      // this.debug(
-      //   `${this.getName()}::emitGATT returned from getAndEmitBatteryData`
-      // );
+      this.debug(
+        `${this.getName()}::emitGATT returned from getAndEmitBatteryData`
+      );
     } catch (e) {
       console.error(e);
       this.debug(
@@ -190,7 +218,7 @@ class Ultramax extends BTSensor {
   }
 
   async initGATTConnection(isReconnecting = false) {
-    // this.debug(`${this.getName()}::initGATTConnection`);
+    this.debug(`${this.getName()}::initGATTConnection`);
 
     if (this.rxChar)
       try {
@@ -236,6 +264,8 @@ class Ultramax extends BTSensor {
         "voltage",
         "cycles",
         "temp",
+        "SOC",
+        //"protectionStatus",
       ].forEach((tag) => this.emitData(tag, buf));
       for (let i = 0; i < this.numberOfCells; i++) {
         this.emitData(`cell${i}Voltage`, buf);
