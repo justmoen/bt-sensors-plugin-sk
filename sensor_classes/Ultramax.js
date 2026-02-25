@@ -58,7 +58,7 @@ class Ultramax extends BTSensor {
     }
       
     const data = buffer.slice(0, buffer.length - 3);
-    const received = buffer.readUInt8(buffer.length - 2);
+    const received = buffer.readUInt8(buffer.length - 3);
 
     let sum = 0;
     for (const b of data)
