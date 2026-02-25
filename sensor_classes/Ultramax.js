@@ -1,19 +1,13 @@
 const BTSensor = require("../BTSensor");
 
-const testData=[
-  ['3a 30 31 35 34 30 31 30 30 45 43 30 30 30 31 30 32 30 33 30',
-  '34 30 35 30 36 30 44 35 42 30 44 37 38 30 44 37 39 30 44 37',
-  '39 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30',
-  '30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30',
-  '30 30 30 30 30 30 30 30 30 46 30 30 30 30 30 30 30 34 36 34',
-  '36 34 36 34 36 31 30 45 45 30 30 30 30 30 30 30 30 37 46 46',
-  '46 46 46 46 46 33 35 43 35 30 30 31 45 30 34 30 30 42 34 36',
-  '33 30 30 30 31 44 34 43 30 30 30 30 34 35 38 46 45 30 30 30',
-  '31 44 34 43 30 30 30 30 32 30 35 46 30 30 30 30 36 30 30 30',
-  '31 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30',
-  '30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30',
-  '30 30 30 30 30 30 30 30 30 30 30 30 30 37 39 00 7e 00 00 00']
-]
+/*
+ * Version 0.1
+ * Disclaimer: Ultramax would not provide a command protocol at the time of creation.  The parsing comes from reverse engineering 
+ * with a packet logger and several EV Power batteries that communicate with Ultramax's UMXLI app.  The app sends several characteristic
+ * discovery messages during connection initialization, likely to empirically determine the battery's specific protocol.  These
+ * exchanges are not currently present in this version of the sensor class.  Using a different battery or firmware may require some 
+ * changes.  Additionally, the alarm status parsing is unknown, as the batteries tested were not forced into any alarm states.
+ */
 
 class Ultramax extends BTSensor {
   static Domain = BTSensor.SensorDomains.electrical
