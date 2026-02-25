@@ -94,7 +94,7 @@ class Ultramax extends BTSensor {
       "SOC",
       "electrical.batteries.capacity.stateOfCharge"
     ).read = (buffer) => {
-      return buffer.readUInt8(69);
+      return buffer.readUInt8(69) / 100;
     };
 
     /* This is TODO:  this is difficult to reverse engineer.  Knowledge from factory would be helpful.
