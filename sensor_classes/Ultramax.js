@@ -58,13 +58,14 @@ class Ultramax extends BTSensor {
     }
       
     const data = buffer.slice(0, buffer.length - 1);
-    const received = buffer[buffer.length - 1];
+    const received = data[buffer.length - 1];
 
     let sum = 0;
     for (const b of data)
       sum += b;
 
     sum &= 0xFF;
+    this.debug(`sum:${data}`);
     this.debug(`sum:${sum}`);
     this.debug(`received:${received}`);
     return sum === received;
@@ -168,7 +169,7 @@ class Ultramax extends BTSensor {
           end >= start
           // buffer.substring(start + 1).readUInt8(1) == 54
         ) {
-          this.debug(`first byte:${result[1]}`);
+          this.debug(`first byte:${result.readUInt8(start+1)}`);
           result = Uint8Array.prototype.slice.call(
             result,
             start + 1,
