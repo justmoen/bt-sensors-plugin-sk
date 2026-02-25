@@ -64,7 +64,7 @@ class Ultramax extends BTSensor {
     for (const b of data)
       sum += b;
 
-    sum &= 0xFF;
+    sum = (-sum) & 0xFF;
     this.debug(`data:${data}`);
     this.debug(`buffer:${buffer}`);
     this.debug(`sum:${sum}`);
