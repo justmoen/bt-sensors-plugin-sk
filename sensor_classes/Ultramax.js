@@ -57,14 +57,14 @@ class Ultramax extends BTSensor {
       return false;
     }
       
-    const data = buffer.slice(0, buffer.length - 3);
-    const received = buffer.readUInt8(buffer.length - 3);
+    const data = buffer.slice(0, buffer.length - 1);
+    const received = buffer[buffer.length - 1];
 
     let sum = 0;
     for (const b of data)
       sum += b;
 
-    sum = (-sum) & 0xFF;
+    sum &= 0xFF;
     this.debug(`data:${data}`);
     this.debug(`buffer:${buffer}`);
     this.debug(`sum:${sum}`);
@@ -181,7 +181,7 @@ class Ultramax extends BTSensor {
           );
           this.rxChar.removeAllListeners();
           clearTimeout(timer);
-          this.verifyChecksum(result);
+          this.verifyChecksum(buffer);
           // if (!this.verifyChecksum(result))
           //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
           resolve(result);
