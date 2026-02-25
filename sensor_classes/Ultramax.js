@@ -145,7 +145,7 @@ class Ultramax extends BTSensor {
 
   getBuffer(command) {
     return new Promise(async (resolve, reject) => {
-      // const r = await this.sendReadFunctionRequest(command);
+      const r = await this.sendReadFunctionRequest(command);
       let result = Buffer.alloc(256);
       let offset = 0;
       
@@ -192,23 +192,16 @@ class Ultramax extends BTSensor {
   }
 
   hasGATT() {
-    this.debug(`${this.getName()}::hasGATT`);
     return true;
   }
 
   usingGATT() {
-    this.debug(`${this.getName()}::usingGATT`);
     return true;
   }
 
   async emitGATT() {
-    this.debug(`${this.getName()}::emitGATT`);
     try {
-      this.debug(`${this.getName()}::emitGATT calling getAndEmitBatteryData`);
       await this.getAndEmitBatteryData();
-      this.debug(
-        `${this.getName()}::emitGATT returned from getAndEmitBatteryData`
-      );
     } catch (e) {
       console.error(e);
       this.debug(
@@ -218,8 +211,6 @@ class Ultramax extends BTSensor {
   }
 
   async initGATTConnection(isReconnecting = false) {
-    this.debug(`${this.getName()}::initGATTConnection`);
-
     if (this.rxChar)
       try {
         this.rxChar.removeAllListeners();
@@ -274,9 +265,6 @@ class Ultramax extends BTSensor {
   }
 
   async initGATTInterval() {
-    this.debug(
-      `${this.getName()}::initGATTInterval pollFreq=${this?.pollFreq}`
-    );
     this.intervalID = setInterval(
       async () => {
         this._error = false;
@@ -297,7 +285,6 @@ class Ultramax extends BTSensor {
   }
 
   async initGATTNotifications() {
-    this.debug(`${this.getName()}::initGATTNotifications`);
   }
 
   async deactivateGATT(){
