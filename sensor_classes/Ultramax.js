@@ -49,29 +49,6 @@ class Ultramax extends BTSensor {
     );
   }
 
-  verifyChecksum(buffer) {
-    if (buffer.length < 2) {
-      console.log(
-        `Cannot checksum ${buffer}. Invalid buffer. Buffer must be at least 2 bytes long.`
-      );
-      return false;
-    }
-      
-    const data = buffer.slice(0, buffer.length - 1);
-    const received = buffer[buffer.length - 1];
-
-    let sum = 0;
-    for (const b of data)
-      sum += b;
-
-    sum &= 0xFF;
-    this.debug(`data:${data}`);
-    this.debug(`buffer:${buffer}`);
-    this.debug(`sum:${sum}`);
-    this.debug(`received:${received}`);
-    return sum === received;
-  }
-
   initSchema(){
     this.debug(`${this.getName()}::initSchema`);
 
@@ -164,9 +141,6 @@ class Ultramax extends BTSensor {
         buffer.copy(result, offset);
         const start = result.indexOf(':');
         const end = result.indexOf('~');
-        this.verifyChecksum(buffer);
-          // if (!this.verifyChecksum(result))
-          //   reject(`Invalid checksum from ${this.getName()}, not processing.`);
         if (
           start !== -1 &&
           end !== -1 &&
