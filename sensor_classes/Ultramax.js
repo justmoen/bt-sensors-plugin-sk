@@ -82,13 +82,15 @@ class Ultramax extends BTSensor {
           return buffer.readUInt16BE((i * 2) + 12) / 1000;
         }
       ).default = `electrical.batteries.{batteryID}.cell${i}.voltage`;
+      this.addMetadatum(
+        `cell${i}Temperature`,
+        "C",
+        `Cell ${i + 1} temperature`,
+        (buffer) => {
+          return buffer.readUInt8((i + 98) + 40);
+        }
+      ).default = `electrical.batteries.{batteryID}.cell${i}.temperature`;
     }
-
-    this.addMetadatum('temp', 'C', 'Temperature reading',
-      (buffer)=>{
-        return buffer.readUInt16BE(64)
-      }
-    ).default='electrical.batteries.{batteryID}.temperature'
 
     this.addDefaultPath(
       "SOC",
